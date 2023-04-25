@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html lang="en">
+
+<head>
+    <title>login2Explore Mini Project - Kunal Vashistha</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Student Enrollment Form</h2>
+        <form id="sForm" method="post">
+            <div class="form-group">
+                <span><label for="sId">Roll No:</label> <label id="sIdMsg">
+</label></span>
+                <input type="text" class="form-control" name="sId" id="sId" placeholder="Enter Student Roll Number" onchange="getStudent()" required>
+            </div>
+            <div class="form-group">
+                <label for="sName"> Full Name:</label>
+                <input type="text" class="form-control" id="sName" placeholder="Enter Student Full Name" name="sName">
+            </div>
+            <div class="form-group">
+                <label for="sClass">Class:</label>
+                <input type="number" class="form-control" id="sClass" placeholder="Enter Class" name="sClass">
+            </div>
+            <div class="form-group">
+                <label for="DOB">Date of Birth:</label>
+                <input type="date" class="form-control" id="DOB" placeholder="" name="DOB">
+            </div>
+            <div class="form-group">
+                <label for="sAddress">Address:</label>
+                <input type="text" class="form-control" id="sAddress" placeholder="" name="sAddress">
+            </div>
+            <div class="form-group">
+                <label for="enrol">Enrollment Date:</label>
+                <input type="date" class="form-control" id="enrol" placeholder="" name="enrol">
+            </div>
+            <button type="button" class="btn btn-primary" id="save" value="Save" onclick="saveStudent();">Save</button>
+            <button type="button" class="btn btn-primary" id="update" value="Update" onclick="updateStudent();">Update</button>
+            <button type="button" class="btn btn-primary" id="reset" value="Reset" onclick="resetStudent();">Reset</button>
+        </form>
+    </div>
+    <script>
+        $("#sId").focus();
+
+        function validateAndGetFormData() {
+            var sIdVar = $("#sId").val();
+            if (sIdVar === "") {
+                alert("Student Roll Required Value");
+                $("#sId").focus();
+                return "";
+            }
+            var sNameVar = $("#sName").val();
+            if (sNameVar === "") {
+                alert("Student Name is Required Value");
+                $("#sName").focus();
+                return "";
+            }
+            var sClassVar = $("#sClass").val();
+            if (sClassVar === "") {
+                alert("Class is Required Value");
+                $("#sClass").focus();
+                return "";
+            }
+            var DOBVar = $("#DOB").val();
+            if (DOBVar === "") {
+                alert("DOB is Required Value");
+                $("#DOB").focus();
+                return "";
+            }
+            var sAddressVar = $("#sAddress").val();
+            if (sAddressVar === "") {
+                alert("Address is Required Value");
+                $("#sAddress").focus();
+                return "";
+            }
+            var enrolVar = $("#enrol").val();
+            if (enrolVar === "") {
+                alert("Enrollment Date is Required Value");
+                $("#enrol").focus();
+                return "";
+            }
+            var jsonStrObj = {
+                sId: sIdVar,
+                sName: sNameVar,
+                sClass: sClassVar,
+                DOB: DOBVar,
+                sAddress: sAddressVar,
+                enrol: enrolVar,
+            };
+            return JSON.stringify(jsonStrObj);
+        }
+        function saverecord(jsonObj){
+            var lvdata= JSON.parse(jsonObj.data);
+            localStorage.setItem("recno", lvdata.rec_no);
+        }
+        // This method is used to create PUT Json request.
+        function createPUTRequest(connToken, jsonObj, dbName, relName) {
+            var putRequest = "{\n" +
+                "\"token\" : \"" +
+                connToken +
+                "\"," +
+                "\"dbName\": \"" +
+                dbName +
+                "\",\n" + "\"cmd\" : \"PUT\",\n" +
+                "\"rel\" : \"" +
+                relName + "\"," +
+                "\"jsonStr\": \n" +
+                jsonObj +
+                "\n" +
+                "}";
+            return putRequest;
+        }
+
+        function executeCommand(reqString, dbBaseUrl, apiEndPointUrl) {
+            var url = dbBaseUrl + apiEndPointUrl;
+            var jsonObj;
+            $.post(url, reqString, function(result) {
+                jsonObj = JSON.parse(result);
+            }).fail(function(result) {
+                var dataJsonObj = result.responseText;
+                jsonObj = JSON.parse(dataJsonObj);
+            });
+            return jsonObj;
+        }
+
+        function resetStudent() {
+            $("#sId").val("")
+            $("#sName").val("");
+            $("#sClass").val("");
+            $("#DOB").val("")
+            $("#sAddress").val("");
+            $("#enrol").val("");
+            $("#sId").prop("disabled",false)
+            $("#sId").prop("save",true)
+            $("#sId").prop("update",true)
+            $("#sId").prop("reset",true)
+            $("#sId").focus();
+        }
+        function filldata() {
+            saverecord(jsonObj);
+            var record=JSON.parse(jsonObj.data).record;
+            $("#sId").val(record.sId);
+            $("#sName").val(record.sName);
+            $("#sClass").val(record.sClass);
+            $("#DOB").val(record.DOB);
+            $("#sAddress").val(record.sAddress);
+            $("#enrol").val(record.enrol);
+
+        }
+
+        function saveStudent() {
+            var jsonStr = validateAndGetFormData();
+            if (jsonStr === "") {
+                return;
+            }
+            var putReqStr = createPUTRequest("90932761|-31949278681317140|90948468",
+                jsonStr, "SCHOOL-DB", "STUDENT-TABLE");
+            alert(putReqStr);
+            jQuery.ajaxSetup({
+                async: false
+            });
+            var resultObj = executeCommand(putReqStr,
+                "http://api.login2explore.com:5577", "/api/iml");
+            alert(JSON.stringify(resultObj));
+            jQuery.ajaxSetup({
+                async: true
+            });
+            resetStudent();
+            $("#sId").focus();
+        }
+
+        function createUPDATERecordRequest(token, jsonObj, dbName, relName, reqId) {
+            var req = "{\n" +
+                "\"token\" : \"" +
+                token +
+                "\"," +
+                "\"dbName\": \"" +
+                dbName +
+                "\",\n" + "\"cmd\" : \"UPDATE\",\n" +
+                "\"rel\" : \"" +
+                relName +
+                "\",\n" +
+                "\"jsonStr\":{ \"" +
+                reqId +
+                "\":\n" +
+                jsonObj +
+                "\n" +
+                "}}";
+            return req;
+        }
+
+        function updateStudent() {
+            $("#update").prop("disabled", true);
+            jsonChg = validateAndGetFormData();
+            var updateRequest = createUPDATERecordRequest("90932761|-31949278681317140|90948468", jsonChg, "SCHOOL-DB", "STUDENT-TABLE",sId);
+            jQuery.ajaxSetup({
+                async: false
+            });
+            var resJsonObj = executeCommandAtGivenBaseUrl(updateRequest, jpdbBaseURL, jpdbIML);
+            jQuery.ajaxSetup({
+                async: true
+            });
+            console.log(resJsonObj);
+            resetStudent();
+            $("#sId").focus();
+        }
+    </script>
+</body>
+
+</html>
